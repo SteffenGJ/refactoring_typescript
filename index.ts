@@ -3,7 +3,7 @@ const TILE_SIZE = 30;
 const FPS = 30;
 const SLEEP = 1000 / FPS;
 
-enum Tile {
+enum RawTile {
   AIR,
   FLUX,
   UNBREAKABLE,
@@ -14,8 +14,251 @@ enum Tile {
   KEY2, LOCK2
 }
 
-enum Input {
+interface Tile2 {
+  isAir(): boolean;
+  isFlux(): boolean;
+  isUnbreakable(): boolean;
+  isPlayer(): boolean;
+  isStone(): boolean;
+  isFallingStone(): boolean;
+  isBox(): boolean;
+  isFallingBox(): boolean;
+  isKey1(): boolean;
+  isLock1(): boolean;
+  isKey2(): boolean;
+  isLock2(): boolean;
+}
+
+class Air implements Tile2 {
+  isAir() { return true; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class Flux implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return true; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class Unbreakable implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return true; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class Player implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return true; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class Stone implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return true; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class FallingStone implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return true; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class Box implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return true; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class FallingBox implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return true; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class Key1 implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return true; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class Lock1 implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return true; }
+  isKey2() { return false; }
+  isLock2() { return false; }
+}
+
+class Key2 implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return true; }
+  isLock2() { return false; }
+}
+
+class Lock2 implements Tile2 {
+  isAir() { return false; }
+  isFlux() { return false; }
+  isUnbreakable() { return false; }
+  isPlayer() { return false; }
+  isStone() { return false; }
+  isFallingStone() { return false; }
+  isBox() { return false; }
+  isFallingBox() { return false; }
+  isKey1() { return false; }
+  isLock1() { return false; }
+  isKey2() { return false; }
+  isLock2() { return true; }
+}
+
+enum RawInput {
   UP, DOWN, LEFT, RIGHT
+}
+
+interface Input {
+  isRight(): boolean;
+  isLeft(): boolean;
+  isUp(): boolean;
+  isDown(): boolean;
+  handle(): void;
+}
+
+class Right implements Input {
+  isRight() { return true; }
+  isLeft() { return false; }
+  isUp() { return false; }
+  isDown() { return false; }
+  handle() {
+    moveHorizontal(1);
+}
+}
+
+class Left implements Input {
+  isRight() { return false; }
+  isLeft() { return true; }
+  isUp() { return false; }
+  isDown() { return false; }
+  handle() {
+    moveHorizontal(-1);
+}
+}
+
+class Up implements Input {
+  isRight() { return false; }
+  isLeft() { return false; }
+  isUp() { return true; }
+  isDown() { return false; }
+  handle() {
+    moveVertical(-1);
+}
+}
+
+class Down implements Input {
+  isRight() { return false; }
+  isLeft() { return false; }
+  isUp() { return false; }
+  isDown() { return true; }
+  handle() {
+    moveVertical(1);
+}
 }
 
 let playerx = 1;
@@ -35,15 +278,15 @@ function remove(tile: Tile) {
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
       if (map[y][x] === tile) {
-        map[y][x] = Tile.AIR;
+        map[y][x] = new Air();
       }
     }
   }
 }
 
 function moveToTile(newx: number, newy: number) {
-  map[playery][playerx] = Tile.AIR;
-  map[newy][newx] = Tile.PLAYER;
+  map[playery][playerx] = new Air();
+  map[newy][newx] = new Player();
   playerx = newx;
   playery = newy;
 }
@@ -81,21 +324,21 @@ function moveVertical(dy: number) {
 }
 
 function update() {
-  while (inputs.length > 0) {
-    let current = inputs.pop();
-    if (current === Input.LEFT)
-      moveHorizontal(-1);
-    else if (current === Input.RIGHT)
-      moveHorizontal(1);
-    else if (current === Input.UP)
-      moveVertical(-1);
-    else if (current === Input.DOWN)
-      moveVertical(1);
-  }
+  handleInputs();
 
+  updateMap();
+}
+
+function updateMap() {
   for (let y = map.length - 1; y >= 0; y--) {
     for (let x = 0; x < map[y].length; x++) {
-      if ((map[y][x] === Tile.STONE || map[y][x] === Tile.FALLING_STONE)
+      updateTile(y, x);
+    }
+  }
+}
+
+function updateTile(y: number, x: number) {
+  if ((map[y][x] === Tile.STONE || map[y][x] === Tile.FALLING_STONE)
         && map[y + 1][x] === Tile.AIR) {
         map[y + 1][x] = Tile.FALLING_STONE;
         map[y][x] = Tile.AIR;
@@ -109,19 +352,43 @@ function update() {
         map[y][x] = Tile.BOX;
       }
     }
+}
+
+function handleInputs() {
+  while (inputs.length > 0) {
+    let input = inputs.pop();
+    input.handle();;
   }
 }
 
+
 function draw() {
+  let g = createGraphics();
+  drawMap(g);
+  drawPlayer(g);
+}
+
+function createGraphics() {
   let canvas = document.getElementById("GameCanvas") as HTMLCanvasElement;
   let g = canvas.getContext("2d");
 
   g.clearRect(0, 0, canvas.width, canvas.height);
+  return g;
+}
 
-  // Draw map
+function drawMap(g: CanvasRenderingContext2D ) {
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
-      if (map[y][x] === Tile.FLUX)
+      colorOfTile(y, x, g);
+
+      if (map[y][x] !== Tile.AIR && map[y][x] !== Tile.PLAYER)
+        g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
+  }
+};
+
+function colorOfTile(y: number, x: number, g: CanvasRenderingContext2D) {
+  if (map[y][x] === Tile.FLUX)
         g.fillStyle = "#ccffcc";
       else if (map[y][x] === Tile.UNBREAKABLE)
         g.fillStyle = "#999999";
@@ -133,13 +400,9 @@ function draw() {
         g.fillStyle = "#ffcc00";
       else if (map[y][x] === Tile.KEY2 || map[y][x] === Tile.LOCK2)
         g.fillStyle = "#00ccff";
+}
 
-      if (map[y][x] !== Tile.AIR && map[y][x] !== Tile.PLAYER)
-        g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    }
-  }
-
-  // Draw player
+function drawPlayer(g: CanvasRenderingContext2D) {
   g.fillStyle = "#ff0000";
   g.fillRect(playerx * TILE_SIZE, playery * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 }
@@ -163,9 +426,9 @@ const UP_KEY = "ArrowUp";
 const RIGHT_KEY = "ArrowRight";
 const DOWN_KEY = "ArrowDown";
 window.addEventListener("keydown", e => {
-  if (e.key === LEFT_KEY || e.key === "a") inputs.push(Input.LEFT);
-  else if (e.key === UP_KEY || e.key === "w") inputs.push(Input.UP);
-  else if (e.key === RIGHT_KEY || e.key === "d") inputs.push(Input.RIGHT);
-  else if (e.key === DOWN_KEY || e.key === "s") inputs.push(Input.DOWN);
+  if (e.key === LEFT_KEY || e.key === "a") inputs.push(new Left());
+  else if (e.key === UP_KEY || e.key === "w") inputs.push(new Up());
+  else if (e.key === RIGHT_KEY || e.key === "d") inputs.push(new Right());
+  else if (e.key === DOWN_KEY || e.key === "s") inputs.push(new Down());
 });
 
