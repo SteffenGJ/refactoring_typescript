@@ -27,6 +27,7 @@ class Falling implements FallingState {
   }
 }
 
+  
 class Resting implements FallingState {
   isFalling() { return false; }
   moveHorizontal(tile: Tile, dx: number) {
