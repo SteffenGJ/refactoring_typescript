@@ -1,4 +1,3 @@
-
 const TILE_SIZE = 30;
 const FPS = 30;
 const SLEEP = 1000 / FPS;
@@ -156,31 +155,33 @@ class Box implements Tile {
   }
 }
 
-class Key1 implements Tile {
+class Key implements Tile {
+  constructor(private keyConf: KeyConfiguration) {}
   isAir() { return false; }
   isLock1() { return false; }
   isLock2() { return false; }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#ffcc00";
+    g.fillStyle = this.keyConf.getColor();
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
-  moveHorizontal(dx: number) {
-    removeLock1();
+  moveHorizontal(dx: number): void {
+    remove(this.keyConf.getRemoveStrategy());
     moveToTile(playerx + dx, playery);
   }
-  moveVertical(dy: number) {
-    removeLock1();
+  moveVertical(dy: number): void {
+    remove(this.keyConf.getRemoveStrategy());
     moveToTile(playerx, playery + dy);
   }
   update(x: number, y: number) {}
 }
 
-class Lock1 implements Tile {
+class Lockk implements Tile {
+  constructor(private keyConf: KeyConfiguration) {}
   isAir() { return false; }
-  isLock1() { return true; }
-  isLock2() { return false; }
+  isLock1() { return this.keyConf.is1(); }
+  isLock2() { return !this.keyConf.is1(); }
   draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#ffcc00";
+    g.fillStyle = this.keyConf.getColor();
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   moveHorizontal(dx: number) {
@@ -191,40 +192,38 @@ class Lock1 implements Tile {
   update(x: number, y: number) {}
 }
 
-class Key2 implements Tile {
-  isAir() { return false; }
-  isLock1() { return false; }
-  isLock2() { return false; }
-  draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#00ccff";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-  }
-  moveHorizontal(dx: number) {
-    removeLock2();
-    moveToTile(playerx + dx, playery);
-  }
-  moveVertical(dy: number) {
-    removeLock2();
-    moveToTile(playerx, playery + dy);
-  }
-  update(x: number, y: number) {}
+interface RemoveStrategy {
+  check(tile: Tile): boolean;
 }
 
-class Lock2 implements Tile {
-  isAir() { return false; }
-  isLock1() { return false; }
-  isLock2() { return true; }
-  draw(g: CanvasRenderingContext2D, x: number, y: number): void {
-    g.fillStyle = "#00ccff";
-    g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+class RemoveLock1 implements RemoveStrategy {
+  check(tile: Tile) {
+    return tile.isLock1();
   }
-  moveHorizontal(dx: number) {
-  }
-  moveVertical(dy: number) {
-    
-  }
-  update(x: number, y: number) {}
 }
+
+class RemoveLock2 implements RemoveStrategy {
+  check(tile: Tile) {
+    return tile.isLock2();
+  }
+}
+
+class KeyConfiguration {
+  constructor(private color: string, private removeStrategy: RemoveStrategy, private _1: boolean) {}
+  getColor() {
+    return this.color;
+  }
+  getRemoveStrategy() {
+    return this.removeStrategy;
+  }
+  is1() {
+    return this._1;
+  }
+}
+
+const YELLOW_KEY = new KeyConfiguration("#ffcc00", new RemoveLock1(), true);
+
+const BLUE_KEY = new KeyConfiguration("#00ccff", new RemoveLock2(), false);
 
 class FallStrategy {
   constructor(private falling: FallingState) {}
@@ -300,10 +299,10 @@ function transformTile(tile: RawTile) {
     case RawTile.FALLING_STONE: return new Stone(new Falling());
     case RawTile.BOX: return new Box(new Resting());
     case RawTile.FALLING_BOX: return new Box(new Falling());
-    case RawTile.KEY1: return new Key1();
-    case RawTile.LOCK1: return new Lock1();
-    case RawTile.KEY2: return new Key2();
-    case RawTile.LOCK2: return new Lock2();
+    case RawTile.KEY1: return new Key(YELLOW_KEY);
+    case RawTile.LOCK1: return new Lockk(YELLOW_KEY);
+    case RawTile.KEY2: return new Key(BLUE_KEY);
+    case RawTile.LOCK2: return new Lockk(BLUE_KEY);
     default: assertExhausted(tile);
   }
 }
@@ -320,20 +319,10 @@ function transformMap() {
 
 let inputs: Input[] = [];
 
-function removeLock1() {
+function remove(shouldRemove: RemoveStrategy) {
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
-      if (map[y][x].isLock1()) {
-        map[y][x] = new Air();
-      }
-    }
-  }
-}
-
-function removeLock2() {
-  for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[y].length; x++) {
-      if (map[y][x].isLock2()) {
+      if (shouldRemove.check(map[y][x])) {
         map[y][x] = new Air();
       }
     }
@@ -423,4 +412,3 @@ window.addEventListener("keydown", e => {
   else if (e.key === RIGHT_KEY || e.key === "d") inputs.push(new Right());
   else if (e.key === DOWN_KEY || e.key === "s") inputs.push(new Down());
 });
-
