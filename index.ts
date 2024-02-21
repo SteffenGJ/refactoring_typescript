@@ -16,17 +16,31 @@ enum RawTile {
 class Player {
   private x = 1;
   private y = 1;
-  getX() {
-    return this.x;
+  draw(g: CanvasRenderingContext2D) {
+    g.fillStyle = "#ff0000";
+    g.fillRect(this.x * TILE_SIZE, this.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
-  getY() {
-    return this.y;
+  moveVertical(dy: number) {
+    map[this.y + dy][this.x].moveVertical(this, dy);
   }
-  setX(x: number) {
-    this.x = x;
+  moveHorizontal(dx: number) {
+    map[this.y][this.x + dx].moveHorizontal(this, dx);
   }
-  setY(y: number) {
-    this.y = y;
+  move(dx: number, dy: number) {
+    player.moveToTile(this.x + dx, this.y + dy);
+  }
+  pushHorizontal(tile: Tile, dx: number) {
+    if (map[this.y][this.x + dx + dx].isAir()
+      && !map[this.y + 1][this.x + dx].isAir()) {
+      map[this.y][this.x + dx + dx] = tile;
+      this.moveToTile(this.x + dx, this.y);
+    }
+  }
+  private moveToTile(newx: number, newy: number) {
+    map[this.y][this.x] = new Air();
+  map[newy][newx] = new PlayerTile();
+  this.x = newx;
+  this.y = newy;
   }
 }
 
@@ -53,11 +67,7 @@ class Falling implements FallingState {
 class Resting implements FallingState {
   isFalling() { return false; }
   moveHorizontal(player: Player, tile: Tile, dx: number) {
-      if (map[player.getY()][player.getX() + dx + dx].isAir()
-      && !map[player.getY() + 1][player.getX() + dx].isAir()) {
-      map[player.getY()][player.getX() + dx + dx] = tile;
-      moveToTile(player, player.getX() + dx, player.getY());
-    }
+      player.pushHorizontal(tile, dx);
   }
   drop(tile: Tile, x: number, y: number) {}
 }
@@ -79,10 +89,10 @@ class Air implements Tile {
   isLock2() { return false; }
   draw(g: CanvasRenderingContext2D, x: number, y: number) { }
   moveHorizontal(player: Player, dx: number) {
-    moveToTile(player, player.getX() + dx, player.getY());
+    player.move(dx, 0);
   }
   moveVertical(player: Player, dy: number) {
-    moveToTile(player, player.getX(), player.getY() + dy);
+    player.move(0, dy);
   }
   update(x: number, y: number) {}
   getBlockOnTopState() {
@@ -99,10 +109,10 @@ class Flux implements Tile {
     g.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
   }
   moveHorizontal(player: Player, dx: number) {
-    moveToTile(player, player.getX() + dx, player.getY());
+    player.move(dx, 0);
   }
   moveVertical(player: Player, dy: number) {
-    moveToTile(player, player.getX(), player.getY() + dy);
+    player.move(0, dy);
   }
   update(x: number, y: number) {}
   getBlockOnTopState(): FallingState {
@@ -209,11 +219,11 @@ class Key implements Tile {
   }
   moveHorizontal(player: Player, dx: number): void {
     this.keyConf.removeLock();
-    moveToTile(player, player.getX() + dx, player.getY());
+    player.move(dx, 0);
   }
   moveVertical(player: Player, dy: number): void {
     this.keyConf.removeLock();
-    moveToTile(player, player.getX(), player.getY() + dy);
+    player.move(0, dy);
   }
   update(x: number, y: number) {}
   getBlockOnTopState(): FallingState {
@@ -300,32 +310,29 @@ interface Input {
 
 class Right implements Input {
   handle(player: Player) {
-    map[player.getY()][player.getX() + 1].moveHorizontal(player, 1);
+    player.moveHorizontal(1);
 }
 }
 
 class Left implements Input {
   handle(player: Player) {
-    map[player.getY()][player.getX() + -1].moveHorizontal(player, -1);
+    player.moveHorizontal(-1);
 }
 }
 
 class Up implements Input {
   handle(player: Player) {
-    map[player.getY() + -1][player.getX()].moveVertical(player, -1)
+    player.moveVertical(-1);
 
 }
 }
 
 class Down implements Input {
   handle(player: Player) {
-    map[player.getY() + 1][player.getX()].moveVertical(player, 1)
+    player.moveVertical(1);
 }
 }
 
-
-// let playerx = 1;
-// let playery = 1;
 let rawMap: RawTile[][] = [
   [2, 2, 2, 2, 2, 2, 2, 2],
   [2, 3, 0, 1, 1, 2, 0, 2],
@@ -380,14 +387,6 @@ function remove(shouldRemove: RemoveStrategy) {
   }
 }
 
-function moveToTile(player: Player, newx: number, newy: number) {
-  map[player.getY()][player.getX()] = new Air();
-  map[newy][newx] = new PlayerTile();
-  player.setX(newx);
-  player.setY(newy);
-}
-
-
 function update(player: Player) {
   handleInputs(player);
 
@@ -409,11 +408,10 @@ function handleInputs(player: Player) {
   }
 }
 
-
 function draw(player: Player) {
   let g = createGraphics();
   drawMap(g);
-  drawPlayer(player, g);
+  player.draw(g);
 }
 
 function createGraphics() {
@@ -432,11 +430,6 @@ function drawMap(g: CanvasRenderingContext2D ) {
   }
 };
 
-
-function drawPlayer(player: Player, g: CanvasRenderingContext2D) {
-  g.fillStyle = "#ff0000";
-  g.fillRect(player.getX() * TILE_SIZE, player.getY() * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-}
 
 function gameLoop(player: Player) {
   let before = Date.now();
