@@ -2,28 +2,127 @@ const TILE_SIZE = 30;
 const FPS = 30;
 const SLEEP = 1000 / FPS;
 
-enum RawTile {
-  AIR,
-  FLUX,
-  UNBREAKABLE,
-  PLAYER,
-  STONE, FALLING_STONE,
-  BOX, FALLING_BOX,
-  KEY1, LOCK1,
-  KEY2, LOCK2
+// enum RawTile {
+//   AIR,
+//   FLUX,
+//   UNBREAKABLE,
+//   PLAYER,
+//   STONE, FALLING_STONE,
+//   BOX, FALLING_BOX,
+//   KEY1, LOCK1,
+//   KEY2, LOCK2
+// }
+
+interface RawTileValue {
+  transform(): Tile;
 }
+
+class AirValue implements RawTileValue {
+  transform() {
+    return new Air();
+  }
+}
+class FluxValue implements RawTileValue {
+  transform() {
+    return new Flux();
+  }
+}
+class UnbreakableValue implements RawTileValue {
+  transform() {
+    return new Unbreakable();
+  }
+}
+class PlayerValue implements RawTileValue {
+  transform() {
+    return new PlayerTile();
+  }
+}
+class StoneValue implements RawTileValue {
+  transform() {
+    return new Stone(new Resting());
+  }
+}
+class FallingStoneValue implements RawTileValue {
+  transform() {
+    return new Stone(new Falling());
+  }
+}
+class BoxValue implements RawTileValue {
+  transform() {
+    return new Box(new Resting());
+  }
+}
+class FallingBoxValue implements RawTileValue {
+  transform() {
+    return new Box(new Falling());
+  }
+}
+class Key1Value implements RawTileValue {
+  transform() {
+    return new Key(YELLOW_KEY);
+  }
+}
+class Lock1Value implements RawTileValue {
+  transform() {
+    return new Lockk(YELLOW_KEY);
+  }
+}
+class Key2Value implements RawTileValue {
+  transform() {
+    return new Key(BLUE_KEY);
+  }
+}
+class Lock2Value implements RawTileValue {
+  transform() {
+    return new Lockk(BLUE_KEY);
+  }
+}
+
+class RawTile2 {
+  static readonly AIR = new RawTile2(new AirValue());
+  static readonly FLUX = new RawTile2(new FluxValue());
+  static readonly UNBREAKABLE = new RawTile2(new UnbreakableValue());
+  static readonly PLAYER = new RawTile2(new PlayerValue());
+  static readonly STONE = new RawTile2(new StoneValue());
+  static readonly FALLING_STONE = new RawTile2(new FallingStoneValue());
+  static readonly BOX = new RawTile2(new BoxValue());
+  static readonly FALLING_BOX = new RawTile2(new FallingBoxValue());
+  static readonly KEY1 = new RawTile2(new Key1Value());
+  static readonly LOCK1 = new RawTile2(new Lock1Value());
+  static readonly KEY2 = new RawTile2(new Key2Value());
+  static readonly LOCK2 = new RawTile2(new Lock2Value());
+
+  private constructor(private value: RawTileValue) {}
+
+  transform() {
+    return this.value.transform();
+  }
+}
+
+const RAW_TILES = [
+  RawTile2.AIR,
+  RawTile2.FLUX,
+  RawTile2.UNBREAKABLE,
+  RawTile2.PLAYER,
+  RawTile2.STONE,
+  RawTile2.FALLING_STONE,
+  RawTile2.BOX,
+  RawTile2.FALLING_BOX,
+  RawTile2.KEY1,
+  RawTile2.LOCK1,
+  RawTile2.KEY2,
+  RawTile2.LOCK2
+]
 
 class Map {
   private map: Tile[][];
-  private getMap() {
-    return this.map;
-  }
-  transform() {
+
+  constructor() {
     this.map = new Array(rawMap.length);
     for (let y = 0; y < rawMap.length; y++) {
       this.map[y] = new Array(rawMap[y].length);
       for (let x = 0; x < rawMap[y].length; x++) {
-        this.map[y][x] = transformTile(rawMap[y][x]);
+        this.map[y][x] = RAW_TILES[rawMap[y][x]].transform();
       }
     }
   }
@@ -56,10 +155,6 @@ class Map {
     return this.map[y][x].isAir();
   }
 
-  setTile(x: number, y: number, tile: Tile) {
-    this.map[y][x] = tile;
-  }
-
   movePlayer(x: number, y: number, newx: number, newy: number) {
     this.map[y][x] = new Air();
     this.map[newy][newx] = new PlayerTile();
@@ -82,9 +177,16 @@ class Map {
       }
     }
   }
-}
 
-let map = new Map();
+  pushHorizontal(player: Player, tile: Tile, x: number, y: number, dx: number) {
+    if (this.map[y][x + dx + dx].isAir()
+      && !this.map[y + 1][x  + dx].isAir()
+    ) {
+        this.map[y][x + dx +dx] = tile;
+      player.moveToTile(this, x + dx, y);
+    }
+  }
+}
 
 class Player {
   private x = 1;
@@ -100,17 +202,12 @@ class Player {
     map.moveHorizontal(this, this.x, this.y, dx);
   }
   move(map: Map, dx: number, dy: number) {
-    player.moveToTile(map, this.x + dx, this.y + dy);
+    this.moveToTile(map, this.x + dx, this.y + dy);
   }
   pushHorizontal(map: Map, tile: Tile, dx: number) {
-    if (map.isAir(this.x + dx + dx, this.y)
-      && !map.isAir(this.x + dx, this.y + 1)
-    ) {
-        map.setTile(this.x + dx + dx, this.y, tile)
-      this.moveToTile(map, this.x + dx, this.y);
-    }
+    map.pushHorizontal(this, tile, this.x, this.y, dx);
   }
-  private moveToTile(map: Map, newx: number, newy: number) {
+  moveToTile(map: Map, newx: number, newy: number) {
     map.movePlayer(this.x, this.y, newx, newy);
   this.x = newx;
   this.y = newy;
@@ -383,29 +480,28 @@ interface Input {
 class Right implements Input {
   handle(map: Map, player: Player) {
     player.moveHorizontal(map, 1);
-}
+  }
 }
 
 class Left implements Input {
   handle(map: Map, player: Player) {
     player.moveHorizontal(map, -1);
-}
+  }
 }
 
 class Up implements Input {
   handle(map: Map, player: Player) {
     player.moveVertical(map, -1);
-
-}
+  }
 }
 
 class Down implements Input {
   handle(map: Map, player: Player) {
     player.moveVertical(map, 1);
-}
+  }
 }
 
-let rawMap: RawTile[][] = [
+let rawMap: number[][] = [
   [2, 2, 2, 2, 2, 2, 2, 2],
   [2, 3, 0, 1, 1, 2, 0, 2],
   [2, 4, 2, 6, 1, 2, 0, 2],
@@ -418,23 +514,24 @@ function assertExhausted(x: never) : never {
   throw new Error("Unexpected object: " + x);
 }
 
-function transformTile(tile: RawTile) {
-  switch (tile) {
-    case RawTile.AIR: return new Air();
-    case RawTile.FLUX: return new Flux();
-    case RawTile.UNBREAKABLE: return new Unbreakable();
-    case RawTile.PLAYER: return new PlayerTile();
-    case RawTile.STONE: return new Stone(new Resting());
-    case RawTile.FALLING_STONE: return new Stone(new Falling());
-    case RawTile.BOX: return new Box(new Resting());
-    case RawTile.FALLING_BOX: return new Box(new Falling());
-    case RawTile.KEY1: return new Key(YELLOW_KEY);
-    case RawTile.LOCK1: return new Lockk(YELLOW_KEY);
-    case RawTile.KEY2: return new Key(BLUE_KEY);
-    case RawTile.LOCK2: return new Lockk(BLUE_KEY);
-    default: assertExhausted(tile);
-  }
-}
+// function transformTile(tile: RawTile2) {
+//   // switch (tile) {
+//   //   case RawTile.AIR: return new Air();
+//   //   case RawTile.FLUX: return new Flux();
+//   //   case RawTile.UNBREAKABLE: return new Unbreakable();
+//   //   case RawTile.PLAYER: return new PlayerTile();
+//   //   case RawTile.STONE: return new Stone(new Resting());
+//   //   case RawTile.FALLING_STONE: return new Stone(new Falling());
+//   //   case RawTile.BOX: return new Box(new Resting());
+//   //   case RawTile.FALLING_BOX: return new Box(new Falling());
+//   //   case RawTile.KEY1: return new Key(YELLOW_KEY);
+//   //   case RawTile.LOCK1: return new Lockk(YELLOW_KEY);
+//   //   case RawTile.KEY2: return new Key(BLUE_KEY);
+//   //   case RawTile.LOCK2: return new Lockk(BLUE_KEY);
+//   //   default: assertExhausted(tile);
+//   // }
+//   return tile.transform();
+// }
 
 let inputs: Input[] = [];
 
@@ -476,7 +573,7 @@ function gameLoop(map: Map, player: Player) {
 }
 
 window.onload = () => {
-  map.transform();
+  let map = new Map();
   gameLoop(map, player);
 }
 
